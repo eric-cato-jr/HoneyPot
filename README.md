@@ -25,6 +25,8 @@ This simulates a real SOC scenario where analysts monitor authentication logs, i
 
 # 🧾 Step 1 – Create Azure Subscription & Resource Group
 
+![Azure Subscription}(azsub.png).
+
 An Azure subscription was created to host all cloud resources for this lab.
 
 A dedicated Resource Group (`RG-SOC-Lab`) was then created to organize and manage all deployed resources in one location.
