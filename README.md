@@ -11,7 +11,7 @@ This simulates a real SOC scenario where analysts monitor authentication logs, i
 ## 🛠 Tools & Technologies Used
 
 - Microsoft Azure
-- Azure Subscription
+- Azure Subscription (Azure for Students)
 - Azure Virtual Network (VNet)
 - Azure Virtual Machine (Windows 10)
 - Network Security Group (NSG)
@@ -25,13 +25,25 @@ This simulates a real SOC scenario where analysts monitor authentication logs, i
 
 # 🧾 Step 1 – Create Azure Subscription & Resource Group
 
-![Azure Subscription}(azsub.png).
+![Azure Subscription & Resource Group](azsub.png)
 
-An Azure subscription was created to host all cloud resources for this lab.
+### Explanation
 
-A dedicated Resource Group (`RG-SOC-Lab`) was then created to organize and manage all deployed resources in one location.
+An Azure for Students subscription was used to deploy the lab infrastructure.
 
-This ensures all infrastructure components are logically grouped and easy to manage.
+A dedicated Resource Group (`RG-SOC-Lab`) was created in:
+
+- Region: East US 2
+
+The Resource Group acts as a logical container that holds all cloud resources for this lab, including:
+
+- Virtual Network
+- Virtual Machine
+- Network Security Group
+- Log Analytics Workspace
+- Microsoft Sentinel
+
+This keeps all components organized and easy to manage.
 
 ---
 
@@ -50,7 +62,7 @@ Configuration details:
 - Address Space: `10.0.0.0/16`
 - Subnet: `10.0.0.0/24`
 
-This network provides internal addressing and isolates the lab environment within Azure.
+This virtual network provides internal IP addressing and isolates the lab environment inside Azure.
 
 ---
 
@@ -62,32 +74,33 @@ This network provides internal addressing and isolates the lab environment withi
 
 A Windows 10 Pro virtual machine was deployed inside the virtual network.
 
-Key details:
+Key configuration details:
 
 - VM Name: `CORP-NET-EAST-1`
 - Size: Standard D2s v3
-- Public RDP Port Enabled
+- Public IP Address Assigned
+- RDP (Port 3389) Enabled to Internet
 
-Azure generated a warning stating that RDP was open to the internet.  
-This was intentional for honeypot purposes.
-
-The VM was assigned a public IP address so it could receive traffic from the internet.
+Azure generated a warning indicating RDP was open to the public internet.  
+This was intentional to simulate a vulnerable external-facing system.
 
 ---
 
 # 🔓 Step 4 – Disable Firewall Protections Inside the VM
 
+## Windows Defender Firewall Disabled
+
 ![Windows Firewall Disabled](WindowsFirewall.png)
 
 ### Explanation
 
-After connecting to the VM via RDP, Windows Defender Firewall was disabled for:
+After connecting via RDP, Windows Defender Firewall was disabled for:
 
 - Domain Profile
 - Private Profile
 - Public Profile
 
-This intentionally removed host-based protections to increase vulnerability.
+This intentionally removed host-based protection, increasing the system’s exposure to external attacks.
 
 ---
 
@@ -106,19 +119,19 @@ Notice the rule:
 - Destination: Any
 - Action: Allow
 
-This ensures the VM is fully exposed to global scanning and brute-force attempts.
+This ensured the VM was fully exposed to internet scanning and brute-force attempts.
 
 ---
 
-# 🖥 Step 5 – Verify Access (RDP & Connectivity Test)
+# 🖥 Step 5 – Verify Connectivity (RDP & Ping Test)
 
 After disabling firewall protections:
 
-- RDP connectivity was verified
-- The machine was successfully accessed remotely
+- RDP connectivity was verified successfully
+- The system was accessible remotely
 - The VM was pinged externally to confirm it was online and reachable
 
-This confirmed the honeypot was fully exposed and operational.
+This confirmed the honeypot was operational and exposed.
 
 ---
 
@@ -128,22 +141,22 @@ This confirmed the honeypot was fully exposed and operational.
 
 ### Explanation
 
-The VM was connected to a Log Analytics Workspace (`LAW-soc-lab-0000`) to collect Windows Security Event logs.
+The VM was connected to a Log Analytics Workspace (`LAW-soc-lab-0000`) to collect Windows Security logs.
 
-We ran a KQL query filtering:
+A KQL query was executed to filter:
 
 - Event ID 4625 (Failed Logins)
-- Extracted attacker IP addresses
-- Enriched IP data with geographic lookup
-
-The query displayed:
-
 - Attacker IP addresses
+- Geographic location data
+
+The results showed:
+
+- Attacker IP
 - City
 - Country
 - Latitude & Longitude
 
-This allowed us to identify where attackers were attempting to log in from.
+This allowed identification of where brute-force attempts were originating.
 
 ---
 
@@ -153,16 +166,16 @@ This allowed us to identify where attackers were attempting to log in from.
 
 ### Explanation
 
-The Log Analytics Workspace was connected to Microsoft Sentinel.
+Microsoft Sentinel was added to the Log Analytics Workspace.
 
 This converted the environment into a cloud-based SIEM platform capable of:
 
-- Log aggregation
-- Threat detection
-- Investigation
-- Visualization
+- Centralized log collection
+- Threat investigation
+- Event correlation
+- Security visualization
 
-Sentinel centralizes all security telemetry in one place.
+Sentinel provides real-time monitoring and analysis capabilities.
 
 ---
 
@@ -172,45 +185,47 @@ Sentinel centralizes all security telemetry in one place.
 
 ### Explanation
 
-Using enriched log data, an attack map was created to visually display where login attempts originated.
+Using enriched log data, an attack map was created to visually display global attack sources.
 
 The map shows:
 
 - Geographic clustering of attackers
 - Volume of attempts per region
-- Global distribution of brute-force activity
+- Worldwide brute-force activity
 
-Within hours of exposure, the machine received login attempts from multiple countries across:
+Within hours of exposure, the system received login attempts from multiple countries across Europe, Asia, North America, and South America.
 
-- Europe
-- Asia
-- North America
-- South America
-
-This demonstrates how quickly internet-facing systems are scanned and targeted.
+This demonstrates how quickly internet-facing systems become targets.
 
 ---
 
 # 📌 Conclusion
 
-This lab demonstrates how rapidly publicly exposed systems attract malicious traffic. By intentionally disabling firewall protections and allowing unrestricted inbound access, the virtual machine became a target for automated brute-force login attempts.
+This lab demonstrates how rapidly publicly exposed systems attract malicious traffic. By intentionally disabling firewall protections and allowing unrestricted inbound access, the virtual machine immediately became a target for automated brute-force login attempts.
 
 Using Azure Log Analytics and Microsoft Sentinel, we were able to:
 
-- Capture authentication failures
+- Capture failed authentication attempts
 - Identify attacker IP addresses
 - Enrich logs with geographic intelligence
 - Visualize global attack patterns
 
-This project highlights the importance of proper firewall configurations, network security groups, and centralized SIEM monitoring in cloud environments.
+This project highlights the importance of proper firewall configuration, hardened NSG rules, and centralized SIEM monitoring in cloud environments.
 
 ---
 
 # 🔑 Key Takeaways
 
-- Public RDP exposure results in immediate brute-force attempts
+- Public RDP exposure results in immediate brute-force activity
 - Disabling firewall protections drastically increases attack surface
 - NSG rules directly impact cloud security posture
-- SIEM platforms provide centralized visibility into authentication events
-- KQL enables detailed attack investigation and geographic enrichment
+- SIEM tools provide centralized visibility into authentication events
+- KQL enables detailed attack analysis and geolocation enrichment
 - Cloud systems must be hardened to prevent unauthorized access
+
+---
+
+## 👤 Author
+
+Eric Cato Jr  
+Enterprise Infrastructure | Cybersecurity | Cloud Security
